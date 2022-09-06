@@ -1,5 +1,16 @@
 version: 2.1
 
+orbs:
+  slack: circleci/slack@4.1
+
+commands:
+  notify_on_failure:
+    steps:
+      - slack/notify:
+          event: fail
+          channel: pipeline
+          template: basic_fail_1
+
 jobs:
   build-frontend:
     docker:
@@ -17,6 +28,7 @@ jobs:
       - save_cache:
           paths: [frontend/node_modules]
           key: frontend-build
+      - notify_on_failure
   build-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -33,6 +45,7 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
+      - notify_on_failure
         
 
   test-frontend:
@@ -48,6 +61,7 @@ jobs:
             cd frontend
             npm install
             npm run test
+      - notify_on_failure
 
   test-backend:
     docker:
@@ -62,6 +76,7 @@ jobs:
             cd backend
             npm install
             npm run test
+      - notify_on_failure
 
 
 
@@ -79,7 +94,7 @@ jobs:
             npm install
             npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
-  
+      - notify_on_failure
   scan-backend:
     docker:
       - image: circleci/node:13.8.0
@@ -92,10 +107,18 @@ jobs:
           command: |
             cd backend
             npm install
-            npm audit fix --audit-level=critical --force
-            npm audit fix --audit-level=critical --force
             npm audit --audit-level=critical
+      - notify_on_failure
 
+
+  notify_on_success:
+    docker:
+      - image: 'cimg/base:stable'
+    steps:
+      - slack/notify:
+          event: pass
+          channel: pipline
+          template: success_tagged_deploy_1
 
 workflows:
   auto_deploy_pipeline:
@@ -110,3 +133,9 @@ workflows:
           requires: [build-frontend]
       - scan-backend:
           requires: [build-backend]
+      - notify_on_success: 
+          requires:
+            - test-frontend
+            - test-backend
+            - scan-frontend
+            - scan-backend
