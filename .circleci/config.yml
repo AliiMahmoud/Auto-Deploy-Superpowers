@@ -119,7 +119,7 @@ jobs:
     steps:
       - slack/notify:
           event: pass
-          channel: pipline
+          channel: pipeline
           template: success_tagged_deploy_1
 
 workflows:
