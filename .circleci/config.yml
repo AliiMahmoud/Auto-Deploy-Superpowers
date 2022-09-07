@@ -10,7 +10,6 @@ commands:
           event: fail
           channel: pipeline
           template: basic_fail_1
-
   destroy_environment:
     description: Destroy backend and frontend cloudformation stacks given a workflow ID.
     parameters:
@@ -24,6 +23,15 @@ commands:
             aws cloudformation delete-stack --stack-name udapeople-backend-<<parameters.workflow_id>>
             # aws s3 rm s3://udapeople-<<parameters.workflow_id>> --recursive
             aws cloudformation delete-stack --stack-name udapeople-frontend-<<parameters.workflow_id>>
+  install_awscli:
+    description: Install AWS CLI v2
+    steps:
+      - run:
+          name: Install AWS CLI v2
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
 
 jobs:
   build-frontend:
@@ -162,11 +170,12 @@ jobs:
       - image: python:3.7-alpine3.11
     steps:
       - checkout
+      - install_awscli
       - add_ssh_keys:
           fingerprints: ["9d:7f:58:d7:ac:58:ff:ad:49:f8:2e:eb:48:34:e9:5d"]
       - run:
           name: Install Ansible
-          command: apk add --update ansible 
+          command: apk add --update ansible awscli
       - attach_workspace:
           at: ~/
       - run: 
