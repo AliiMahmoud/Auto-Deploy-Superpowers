@@ -295,8 +295,8 @@ jobs:
       - run: 
           name: moving the artifact from the shelf
           command: |
-            tar -czf artifact.tar.gz backend/dist package*
-            cp backend/artifact* .circleci/ansible/roles/deploy/files
+            tar -czf artifact.tar.gz backend/dist backend/package*
+            cp artifact* .circleci/ansible/roles/deploy/files
       - run: 
           name: Deploy backend using ansible
           command: |
@@ -318,7 +318,7 @@ jobs:
               --query "Reservations[*].Instaces[*].PublicIpAddress" \
               --filter "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text)
-            export API_URL=http://${BACKEND_IP}:3030"
+            export API_URL="http://${BACKEND_IP}:3030"
             if curl -s ${API_URL}/api/status | grep "ok"
             then 
               return 0
@@ -340,6 +340,39 @@ jobs:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
       - revert-migration:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+# Promote To Production
+  cloudfront-update:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run: 
+          name: Getting last version info
+          command: |
+            export OLD_WORKFLOW_ID=$(aws cloudformation \
+              list-exports --query "Exports[?Name==\`WorkflowID\`].Value"  --output text)
+            export STACKS=$(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+              --stack-status-filter CREATE_COMPLETE --output text)
+            echo OLD_WORKFLOW_ID : ${OLD_WORKFLOW_ID}
+            echo NEW_WORKFLOW_ID : ${CIRCLE_WORKFLOW_ID:0:7}
+            echo Stack names: "${STACKS[@]}" 
+      - run: 
+          name: promotion to production
+          command: |
+            aws cloudformation deploy \
+            --template-file .circleci/files/cloudfront.yml \
+            --stack-name routerStack \
+            --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
+            --tags project=udapeople
+      - run: 
+          name: cleaning up old stack
+          command: |
+            if [[ "${STACKS[@]}" =~ "${OLD_WORKFLOW_ID}" ]]
+            then
+              aws s3 rm "s3://udapeople-${OLD_WORKFLOW_ID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OLD_WORKFLOW_ID}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OLD_WORKFLOW_ID}"
+            fi
 
 workflows:
   auto_deploy_pipeline:
@@ -369,3 +402,5 @@ workflows:
           requires: [run-migrations]
       - smoke-test:
           requires: [deploy-frontend, deploy-backend]
+      - cloudfront-update:
+          requires: [smoke-test]
