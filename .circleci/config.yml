@@ -207,6 +207,7 @@ jobs:
           command: python3 -m pip install --user ansible
       - attach_workspace:
           at: ~/
+      - run: cat .circleci/ansible/inventory.txt
       - run: 
           name: Run Playbook and Configure server
           command: |
@@ -251,7 +252,9 @@ jobs:
           keys: [frontend-build]
       - run: 
           name: install node dependancies
-          command: npm install
+          command: |
+            cd frontend
+            npm install
       - run:
           name: Get backend url
           command: |
@@ -395,12 +398,12 @@ workflows:
               only: [master]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
-      # - run-migrations:
-      #     requires: [configure-infrastructure]
-      # - deploy-frontend: 
-      #     requires: [run-migrations]
-      # - deploy-backend: 
-      #     requires: [run-migrations]
+      - run-migrations:
+          requires: [configure-infrastructure]
+      - deploy-frontend: 
+          requires: [run-migrations]
+      - deploy-backend: 
+          requires: [run-migrations]
       # - smoke-test:
       #     requires: [deploy-frontend, deploy-backend]
       # - cloudfront-update:
