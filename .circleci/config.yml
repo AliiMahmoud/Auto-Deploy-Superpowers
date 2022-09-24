@@ -224,6 +224,7 @@ jobs:
       - install_awscli
       - restore_cache:
           keys: [backend-build]
+      - run: printenv
       - run:
           name: Run migrations
           command: |
