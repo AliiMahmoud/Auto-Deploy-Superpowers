@@ -1,7 +1,4 @@
 ---
-- name: a
-  debug:
-    msg: "{{ lookup('env', 'TYPEORM_MIGRATIONS')}}"
     
 - name: Install Node.js version 13
   become: true
