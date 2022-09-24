@@ -42,7 +42,7 @@ commands:
           name: revert migration
           when: on_fail
           command: |
-            SUCCESS=$(curl --insecure curl https://kvdb.io/9GE4jRtKznmVKRfvdBABBe/migration_<< workflow_id >>) 
+            SUCCESS=$(curl --insecure https://www.kvdb.io/9GE4jRtKznmVKRfvdBABBe/migration_<<parameters.workflow_id>>) 
             if (($SUCCESS == 1));
             then 
               cd backend
@@ -214,6 +214,7 @@ jobs:
             ansible-playbook -i inventory.txt configure-server.yml
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
+
   run-migrations:
     docker:
       - image: circleci/node:13.8.0
@@ -233,7 +234,7 @@ jobs:
           command: |   
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then 
-              curl https://kvdb.io/61SZUvhbAAGHkELRK6sjK9/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+              curl https://www.kvdb.io/61SZUvhbAAGHkELRK6sjK9/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
