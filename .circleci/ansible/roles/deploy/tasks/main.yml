@@ -14,6 +14,18 @@
     cd ~/backend
     npm install
 
+- name: test ls in backend
+  shell: | 
+    cd ~/backend
+    ls -la
+    ls dist
+  register: lol
+
+- name: testing
+  debug:
+    msg: "{{lol.stdout.lines}}"
+
+
 - name: running the app
   shell: |
     cd ~/backend/dist
