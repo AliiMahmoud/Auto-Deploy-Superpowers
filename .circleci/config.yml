@@ -215,7 +215,6 @@ jobs:
             ansible-playbook -i inventory.txt configure-server.yml
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
-
   run-migrations:
     docker:
       - image: circleci/node:13.8.0
@@ -230,11 +229,6 @@ jobs:
             cd backend
             npm install 
             npm run migrations > migrations_dump.txt
-      - run:
-          name: testing things
-          command: |   
-            cat ~/project/backend/migrations_dump.txt | grep "has been executed successfully"
-            echo https://kvdb.io/61SZUvhbAAGHkELRK6sjK9/migration_${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: Send migration status to kvdb.io
           command: |   
@@ -327,6 +321,8 @@ jobs:
               --filter "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
               --output text)
             export API_URL="http://${BACKEND_IP}:3030"
+            echo $BACKEND_IP
+            echo $API_URL
             if curl -s ${API_URL}/api/status | grep "ok"
             then 
               return 0
@@ -334,15 +330,15 @@ jobs:
               return 1
             fi
       - run:
-          name: backend smoke test
+          name: frontend smoke test
           command: |
             URL="http://udapeople-${CIRCLE_WORKFLOW_ID:0:7}.s3-website-${AWS_DEFAULT_REGION}.amazonaws.com"            
             echo ${URL} 
             if curl -s ${URL} | grep "Welcome"
             then
-              return 5
+              return 1
             else
-              return 4
+              return 1
             fi
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
