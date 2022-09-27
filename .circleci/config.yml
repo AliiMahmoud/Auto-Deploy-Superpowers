@@ -298,7 +298,8 @@ jobs:
       - run: 
           name: moving the artifact from the shelf
           command: |
-            tar -cvzf artifact.tar.gz backend/dist backend/package*
+            cd backend
+            tar -cvzf artifact.tar.gz dist package*
             cp artifact* .circleci/ansible/roles/deploy/files
       - run: 
           name: Deploy backend using ansible
