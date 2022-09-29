@@ -379,7 +379,7 @@ jobs:
       - run: 
           name: cleaning up old stack
           command: |
-            OLD_WORKFLOW_ID=$(curl --insecure https://kvdb.io/61SZUvhbAAGHkELRK6sjK9/${OLD_WORKFLOW_ID})
+            OLD_WORKFLOW_ID=$(curl --insecure https://kvdb.io/61SZUvhbAAGHkELRK6sjK9/OLD_WORKFLOW_ID)
             echo ${OLD_WORKFLOW_ID}
             echo aws s3 rm "s3://udapeople-${OLD_WORKFLOW_ID}" --recursive
             # if [[ "${STACKS[@]}" =~ "${OLD_WORKFLOW_ID}" ]]
