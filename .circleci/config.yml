@@ -354,6 +354,9 @@ jobs:
   cloudfront-update:
     docker:
       - image: amazon/aws-cli
+    environment:
+      OLD_WORKFLOW_ID: aws cloudformation \
+              list-exports --query "Exports[?Name==\`WorkflowID\`].Value"  --output text)
     steps:
       - checkout
       - run: 
