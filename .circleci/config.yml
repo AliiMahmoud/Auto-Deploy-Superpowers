@@ -365,8 +365,8 @@ jobs:
               list-exports --query "Exports[?Name==\`WorkflowID\`].Value"  --output text)
             export STACKS=$(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
               --stack-status-filter CREATE_COMPLETE --output text)
-            echo OLD_WORKFLOW_ID : ${OLD_WORKFLOW_ID}
             echo NEW_WORKFLOW_ID : ${CIRCLE_WORKFLOW_ID:0:7}
+            echo OLD_WORKFLOW_ID : ${OLD_WORKFLOW_ID}
             echo Stack names: "${STACKS[@]}" 
       - run: 
           name: Update CloudFront distribution
@@ -374,16 +374,16 @@ jobs:
             aws cloudformation deploy \
             --template-file .circleci/files/cloudfront.yml \
             --stack-name InitialStack \
-            --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
             --tags project=udapeople
       - run: 
           name: cleaning up old stack
           command: |
-            if [[ "${STACKS[@]}" =~ "${OLD_WORKFLOW_ID}" ]]
+            if [[ "${STACKS[@]}" =~ "${OLD_WORKFLOW_ID:10}" ]]
             then
-              aws s3 rm "s3://udapeople-${OLD_WORKFLOW_ID}" --recursive
-              aws cloudformation delete-stack --stack-name "udapeople-backend-${OLD_WORKFLOW_ID}"
-              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OLD_WORKFLOW_ID}"
+              aws s3 rm "s3://udapeople-${OLD_WORKFLOW_ID:10}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OLD_WORKFLOW_ID:10}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OLD_WORKFLOW_ID:10}"
             fi
 
 workflows:
