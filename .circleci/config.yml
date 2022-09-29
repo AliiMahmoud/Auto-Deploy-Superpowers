@@ -229,12 +229,14 @@ jobs:
             cd backend
             npm install 
             npm run migrations > migrations_dump.txt
+            cat migrations_dump.txt | grep "has been executed successfully."
+            printenv
       - run:
           name: Send migration status to kvdb.io
           command: |   
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then 
-              curl --insecure -d "1" https://kvdb.io/61SZUvhbAAGHkELRK6sjK9/migration_${CIRCLE_WORKFLOW_ID:0:7}
+              curl --insecure https://kvdb.io/61SZUvhbAAGHkELRK6sjK9/migration_${CIRCLE_WORKFLOW_ID:0:7} -d "1"
             fi
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
@@ -258,8 +260,8 @@ jobs:
           name: Get backend url
           command: |
             BACKEND_IP=$(aws ec2 describe-instances \
-              --query "Reservations[*].Instaces[*].PublicIpAddress" \
-              --filter "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
               --output text)
             echo "API_URL=http://${BACKEND_IP}:3030" >> frontend/.env
             cat frontend/.env
@@ -268,6 +270,7 @@ jobs:
           command: |
             cd frontend
             npm run build
+            ls dist -R
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
       - destroy_environment:
           workflow_id: "${CIRCLE_WORKFLOW_ID:0:7}"
@@ -341,7 +344,7 @@ jobs:
             echo ${URL} 
             if curl -s ${URL} | grep "Welcome"
             then
-              exit 1
+              exit 0
             else
               exit 1
             fi
@@ -366,12 +369,12 @@ jobs:
             echo NEW_WORKFLOW_ID : ${CIRCLE_WORKFLOW_ID:0:7}
             echo Stack names: "${STACKS[@]}" 
       - run: 
-          name: promotion to production
+          name: Update CloudFront distribution
           command: |
             aws cloudformation deploy \
             --template-file .circleci/files/cloudfront.yml \
-            --stack-name routerStack \
-            --parameter-overrides WorkflowID="${CIRCLE_WORKFLOW_ID:0:7}" \
+            --stack-name InitialStack \
+            --parameter-overrides WorkflowID="udapeople-${CIRCLE_WORKFLOW_ID:0:7}" \
             --tags project=udapeople
       - run: 
           name: cleaning up old stack
@@ -411,5 +414,5 @@ workflows:
           requires: [run-migrations]
       - smoke-test:
           requires: [deploy-frontend, deploy-backend]
-      # - cloudfront-update:
-      #     requires: [smoke-test]
+      - cloudfront-update:
+          requires: [smoke-test]
