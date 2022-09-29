@@ -359,9 +359,9 @@ jobs:
       - run: 
           name: Getting last version info
           command: |
-            export OLD_WORKFLOW_ID=$(aws cloudformation \
+            OLD_WORKFLOW_ID=$(aws cloudformation \
               list-exports --query "Exports[?Name==\`WorkflowID\`].Value"  --output text)
-            export STACKS=$(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
+            STACKS=$(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
               --stack-status-filter CREATE_COMPLETE --output text)
             echo NEW_WORKFLOW_ID : ${CIRCLE_WORKFLOW_ID:0:7}
             echo OLD_WORKFLOW_ID : ${OLD_WORKFLOW_ID}
@@ -379,12 +379,12 @@ jobs:
           command: |
             echo ${OLD_WORKFLOW_ID}
             echo aws s3 rm "s3://udapeople-${OLD_WORKFLOW_ID}" --recursive
-            if [[ "${STACKS[@]}" =~ "${OLD_WORKFLOW_ID}" ]]
-            then 
-              aws s3 rm "s3://udapeople-${OLD_WORKFLOW_ID}" --recursive
-              aws cloudformation delete-stack --stack-name "udapeople-backend-${OLD_WORKFLOW_ID}"
-              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OLD_WORKFLOW_ID}"
-            fi
+            # if [[ "${STACKS[@]}" =~ "${OLD_WORKFLOW_ID}" ]]
+            # then 
+            #   aws s3 rm "s3://udapeople-${OLD_WORKFLOW_ID}" --recursive
+            #   aws cloudformation delete-stack --stack-name "udapeople-backend-${OLD_WORKFLOW_ID}"
+            #   aws cloudformation delete-stack --stack-name "udapeople-frontend-${OLD_WORKFLOW_ID}"
+            # fi
 
 workflows:
   auto_deploy_pipeline:
